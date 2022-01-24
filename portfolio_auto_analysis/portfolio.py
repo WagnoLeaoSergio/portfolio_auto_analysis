@@ -5,6 +5,7 @@ import seaborn as sb
 from datetime import date
 from nsepy import get_history
 
+
 class Portfolio_Analyzer():
     """
     Class responsible for the required components
@@ -17,7 +18,7 @@ class Portfolio_Analyzer():
 
     def get_price_data(
         self,
-        symbols:list,
+        symbols: list,
         start_date: date,
         end_date: date
     ) -> pd.DataFrame:
@@ -34,9 +35,9 @@ class Portfolio_Analyzer():
                 start=start_date,
                 end=end_date
             )[['Symbol', 'Close']]
-            
+
             data.rename(
-                columns={ 'Close': data['Symbol'][0] },
+                columns={'Close': data['Symbol'][0]},
                 inplace=True
             )
 
@@ -52,7 +53,7 @@ class Portfolio_Analyzer():
         """
         Plots the price history of the portfolio's symbols.
         """
-        fig, ax = plt.subplots(figsize=(15,8))
+        fig, ax = plt.subplots(figsize=(15, 8))
         for i in data_frame.columns.values:
             ax.plot(data_frame[i], label=i)
 
@@ -62,7 +63,6 @@ class Portfolio_Analyzer():
         ax.legend(data_frame.columns.values, loc='upper left')
         plt.savefig(self.graphs_folder + 'symbols_prices_history.png')
 
-
     def plot_correlation_matrix(self, data_frame: pd.DataFrame) -> None:
         """
         Plot the correlation matrix of the portfolio.
@@ -71,7 +71,7 @@ class Portfolio_Analyzer():
         print('Correlation between Symbols in your portfolio')
         print(correlation_matrix)
 
-        fig = plt.figure(figsize=(12,7))
+        plt.figure(figsize=(12, 7))
         sb.heatmap(
             correlation_matrix,
             xticklabels=correlation_matrix.columns,
@@ -125,12 +125,12 @@ class Portfolio_Analyzer():
         print('Periodic Returns Risk')
         psr.plot(
             kind='box',
-            figsize=(20,10),
+            figsize=(20, 10),
             title="Risk Box Plot"
         )
         plt.savefig(self.graphs_folder + 'risk_box_plot.png')
 
-    def generate_annualized_standard_deviantion(
+    def annualized_standard_deviation(
             self,
             psr: pd.DataFrame,
             days: int
@@ -158,8 +158,8 @@ class Portfolio_Analyzer():
         """
         Creates a Line plot for the Cummulative PSR.
         """
-        fig, ax = plt.subplots(figsize=(18,8))
-        
+        fig, ax = plt.subplots(figsize=(18, 8))
+
         for i in c_psr.columns.values:
             ax.plot(
                     c_psr[i],
@@ -168,16 +168,17 @@ class Portfolio_Analyzer():
             )
 
         ax.legend(loc='upper left', fontsize=10)
-        ax.set_title('Periodic Cummulative Simple returns/growth of investment')
+        ax.set_title(
+            'Periodic Cummulative Simple returns/growth of investment'
+        )
         ax.set_xlabel('Date')
         ax.set_ylabel('Growth of Rs 1 investment')
-
         plt.savefig(self.graphs_folder + 'cummulative_returns.png')
+
 
 def proto() -> None:
     plt.style.use('fivethirtyeight')
-    graphs_folder = 'graphs/'
-    
+
     # Defining parameters
     stocksymbols = [
         'TATAMOTORS',
@@ -190,9 +191,9 @@ def proto() -> None:
         'RELIANCE'
     ]
 
-    analyzer = Portfolio_Analyzer();
+    analyzer = Portfolio_Analyzer()
 
-    start_date = date(2021,1,19)
+    start_date = date(2021, 1, 19)
     end_date = date.today()
 
     data_frame = analyzer.get_price_data(
@@ -221,7 +222,6 @@ def proto() -> None:
 
     analyzer.plot_periodic_simple_returns(daily_simple_return)
 
-
     # Avrage Daily returns
     print('Average Daily returns(%) of stocks in your portfolio')
     avg_daily = analyzer.generate_average_PSR(daily_simple_return)
@@ -230,10 +230,7 @@ def proto() -> None:
     # Risk
     analyzer.plot_PSR_risk(daily_simple_return)
 
-    print('Annualized Standard Deviation (Volatility(%), 252 trading days) ' +
-        'of individual stocks in your portfolio on the basis of daily simple ' +
-        'returns.')
-    standard_deviation = analyzer.generate_annualized_standard_deviantion(
+    standard_deviation = analyzer.annualized_standard_deviation(
         daily_simple_return,
         252
     )
@@ -244,7 +241,7 @@ def proto() -> None:
             standard_deviation
     )
     print(return_per_unit_risk)
-    
+
     # Cumulative returns
     print('Cummulative Returns:')
     daily_cummulative_simple_return = analyzer.cummulative_PSR(

@@ -1,6 +1,5 @@
 import argparse  # pragma: no cover
-
-from . import proto # pragma: no cover
+from . import proto  # pragma: no cover
 
 
 def main() -> None:  # pragma: no cover
