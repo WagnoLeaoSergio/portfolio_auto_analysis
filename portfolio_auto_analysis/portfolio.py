@@ -15,13 +15,15 @@ class Portfolio_Analyzer():
         self.graphs_folder = 'graphs/'
         pass
 
-    def get_price_data(self, symbols:list) -> pd.DataFrame:
+    def get_price_data(
+        self,
+        symbols:list,
+        start_date: date,
+        end_date: date
+    ) -> pd.DataFrame:
         """
         Fetchs the historical data of the listed symbols.
         """
-        start_date = date(2021,1,19)
-        end_date = date.today()
-        print(end_date)
         print(f"You have {len(symbols)} assets in your portfolio.")
 
         # Fetching data
@@ -190,7 +192,15 @@ def proto() -> None:
 
     analyzer = Portfolio_Analyzer();
 
-    data_frame = analyzer.get_price_data(stocksymbols)
+    start_date = date(2021,1,19)
+    end_date = date.today()
+
+    data_frame = analyzer.get_price_data(
+        stocksymbols,
+        start_date,
+        end_date
+    )
+
     print(data_frame.head())
 
     # Analysis
