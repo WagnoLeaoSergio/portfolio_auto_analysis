@@ -6,11 +6,19 @@ from datetime import date
 from nsepy import get_history
 
 class Portfolio_Analyzer():
+    """
+    Class responsible for the required components
+    that generates the performance data and graphical
+    visualization of the portfolio.
+    """
     def __init__(self):
         self.graphs_folder = 'graphs/'
         pass
 
     def get_price_data(self, symbols:list) -> pd.DataFrame:
+        """
+        Fetchs the historical data of the listed symbols.
+        """
         start_date = date(2021,1,19)
         end_date = date.today()
         print(end_date)
@@ -39,6 +47,9 @@ class Portfolio_Analyzer():
         return data_frame
 
     def plot_history_graph(self, data_frame: pd.DataFrame) -> None:
+        """
+        Plots the price history of the portfolio's symbols.
+        """
         fig, ax = plt.subplots(figsize=(15,8))
         for i in data_frame.columns.values:
             ax.plot(data_frame[i], label=i)
@@ -51,6 +62,9 @@ class Portfolio_Analyzer():
 
 
     def plot_correlation_matrix(self, data_frame: pd.DataFrame) -> None:
+        """
+        Plot the correlation matrix of the portfolio.
+        """
         correlation_matrix = data_frame.corr(method='pearson')
         print('Correlation between Symbols in your portfolio')
         print(correlation_matrix)
@@ -71,12 +85,19 @@ class Portfolio_Analyzer():
             data_frame: pd.DataFrame,
             period: int
     ) -> pd.DataFrame:
+        """
+        Creates a DataFrame with the period change in the
+        symbol's price history.
+        """
         return data_frame.pct_change(period).dropna()
 
     def plot_periodic_simple_returns(
             self,
             psr: pd.DataFrame
     ) -> None:
+        """
+        Plots the PSR (Periodic Simple Returns) graph.
+        """
         fig, ax = plt.subplots(figsize=(15, 8))
 
         for i in psr.columns.values:
@@ -90,10 +111,15 @@ class Portfolio_Analyzer():
         plt.savefig(self.graphs_folder + 'periodic_simple_returns.png')
 
     def generate_average_PSR(self, psr: pd.DataFrame) -> pd.DataFrame:
+        """
+        As the name says.
+        """
         return psr.mean()
 
     def plot_PSR_risk(self, psr: pd.DataFrame) -> None:
-
+        """
+        Creates a BoxPlot visualization of the PSR.
+        """
         print('Periodic Returns Risk')
         psr.plot(
             kind='box',
@@ -104,8 +130,13 @@ class Portfolio_Analyzer():
 
     def generate_annualized_standard_deviantion(
             self,
-            psr: pd.DataFrame, days: int
+            psr: pd.DataFrame,
+            days: int
     ):
+        """
+        Calculates annualization of the standard deviation
+        for the PSR.
+        """
         return (psr.std() * np.sqrt(days))
 
     def sharpe_ratio(
@@ -116,9 +147,15 @@ class Portfolio_Analyzer():
         return (avg_psr / std) * 100
 
     def cummulative_PSR(self, psr: pd.DataFrame) -> pd.DataFrame:
+        """
+        Creates a DataFrame of the Cummulative PSR.
+        """
         return (psr + 1).cumprod()
 
     def plot_cummulative_PSR(self, c_psr: pd.DataFrame) -> None:
+        """
+        Creates a Line plot for the Cummulative PSR.
+        """
         fig, ax = plt.subplots(figsize=(18,8))
         
         for i in c_psr.columns.values:
