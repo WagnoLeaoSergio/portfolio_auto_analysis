@@ -1,5 +1,8 @@
 import numpy
 import pygad
+from datetime import date
+import matplotlib.pyplot as plt
+from . import Portfolio_Analyzer
 
 last_fitness = 0
 
@@ -15,18 +18,48 @@ def example():
     global fitness_func
     global on_generation
 
-    function_inputs = [4,-2,3.5,5,-11,-4.7] # Function inputs.
-    desired_output = 44 # Function output.
+    # Defining parameters
+    wallet = 1000
+    stocksymbols = [
+        'TATAMOTORS',
+        'DABUR',
+        'ICICIBANK',
+        'WIPRO',
+        'BPCL',
+        'IRCTC',
+        'INFY',
+        'RELIANCE'
+    ]
+
+    analyzer = Portfolio_Analyzer()
+    start_date = date(2021, 1, 19)
+    end_date = date.today()
+    data_frame = analyzer.get_price_data(
+        stocksymbols,
+        start_date,
+        end_date
+    )
 
     def fitness_func(solution, solution_idx):
-        output = numpy.sum(solution*function_inputs)
-        fitness = 1.0 / (numpy.abs(output - desired_output) + 0.000001)
-        return fitness
+        if numpy.sum(solution) <= 0 or numpy.sum(solution) > 1:
+            return 0
+            
+        daily_simple_return = analyzer.generate_periodic_simple_returns(
+                data_frame,
+                1
+        )
+        avg_daily = analyzer.generate_average_PSR(daily_simple_return)
+        standard_deviation = analyzer.annualized_standard_deviation(
+            daily_simple_return,
+            252
+        )
+        sharpe_ratio = analyzer.sharpe_ratio(avg_daily, standard_deviation)
+        fitness = 0
 
-    num_generations = 100 # Number of generations.
-    num_parents_mating = 10 # Number of solutions to be selected as parents in the mating pool.
-    sol_per_pop = 20 # Number of solutions in the population.
-    num_genes = len(function_inputs)
+        for i, percentage in enumerate(solution):
+            fitness += percentage*sharpe_ratio[i]
+
+        return fitness
 
     def on_generation(ga_instance):
         global last_fitness
@@ -35,28 +68,42 @@ def example():
         print("Change     = {change}".format(change=ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1] - last_fitness))
         last_fitness = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
 
+    num_generations = 2000 # Number of generations.
+    num_parents_mating = 10 # Number of solutions to be selected as parents in the mating pool.
+    sol_per_pop = 40 # Number of solutions in the population.
+    num_genes = len(stocksymbols)
+    init_low_range = 0.0
+    init_high_range = 1.0
+    random_mutation_min_val = 0.0
+    random_mutation_max_val = 1.0
+    initial_population = [ [ 1/len(stocksymbols) for _ in stocksymbols ] for _ in range(sol_per_pop) ]
+    gene_space = numpy.linspace(0, 1, 300)
+
     ga_instance = pygad.GA(
+        gene_space=gene_space,
         num_generations=num_generations,
         num_parents_mating=num_parents_mating,
         sol_per_pop=sol_per_pop,
         num_genes=num_genes,
+        init_range_low=init_low_range,
+        init_range_high=init_high_range,
+        random_mutation_min_val=random_mutation_min_val,
+        random_mutation_max_val=random_mutation_max_val,
         fitness_func=fitness_func,
         on_generation=on_generation
     )
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
-
     ga_instance.plot_fitness()
+    plt.savefig('graphs/optimization_fitness.png')
+
 
     # Returning the details of the best solution.
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
     print("Parameters of the best solution : {solution}".format(solution=solution))
     print("Fitness value of the best solution = {solution_fitness}".format(solution_fitness=solution_fitness))
     print("Index of the best solution : {solution_idx}".format(solution_idx=solution_idx))
-
-    prediction = numpy.sum(numpy.array(function_inputs)*solution)
-    print("Predicted output based on the best solution : {prediction}".format(prediction=prediction))
 
     if ga_instance.best_solution_generation != -1:
         print("Best fitness value reached after {best_solution_generation} generations.".format(best_solution_generation=ga_instance.best_solution_generation))
