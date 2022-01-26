@@ -1,9 +1,9 @@
+import investpy
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sb
 from datetime import date
-from nsepy import get_history
+import matplotlib.pyplot as plt
 
 
 class Portfolio_Analyzer():
@@ -30,24 +30,52 @@ class Portfolio_Analyzer():
         # Fetching data
         data_frame = pd.DataFrame()
         for i, symbol in enumerate(symbols):
-            data = get_history(
-                symbol=symbol,
-                start=start_date,
-                end=end_date
-            )[['Symbol', 'Close']]
+            data = investpy.get_stock_historical_data(
+                country='United States',
+                stock=symbol,
+                from_date=start_date.strftime('%d/%m/%Y'),
+                to_date=end_date.strftime('%d/%m/%Y'),
+            )[['Close']]
 
             data.rename(
-                columns={'Close': data['Symbol'][0]},
+                columns={'Close': symbol},
                 inplace=True
             )
 
-            data.drop(['Symbol'], axis=1, inplace=True)
+            # data.drop(['Symbol'], axis=1, inplace=True)
 
             if i == 0:
                 data_frame = data
             else:
                 data_frame = data_frame.join(data)
         return data_frame
+
+    def portfolio_table(
+        self,
+        data_frame: pd.DataFrame,
+        percentages: list,
+        allocation: float
+    ) -> pd.DataFrame:
+
+        """
+        Creates an DataFrame with the normalized positions
+        of each symbol associated with your respective percentage
+        in the portfolio.
+        """
+        tables = [ pd.DataFrame(data_frame[i]) for i in data_frame.columns.values ]
+
+        for i, value in enumerate(data_frame.columns.values):
+            tables[i]['Norm return'] = tables[i] / tables[i].iloc[0]
+            tables[i]['Allocation'] = tables[i]['Norm return'] * percentages[i]
+            tables[i]['Position'] = tables[i]['Allocation'] * allocation
+
+
+        all_tables = [ table['Position'] for table in tables ]
+        portf_table = pd.concat(all_tables, axis=1)
+        portf_table.columns = data_frame.columns.values
+        portf_table['Total Pos'] = portf_table.sum(axis=1)
+        return portf_table
+
 
     def plot_history_graph(self, data_frame: pd.DataFrame) -> None:
         """
@@ -82,7 +110,7 @@ class Portfolio_Analyzer():
         )
         plt.savefig(self.graphs_folder + 'correlation_matrix.png')
 
-    def generate_periodic_simple_returns(
+    def periodic_simple_returns(
             self,
             data_frame: pd.DataFrame,
             period: int
@@ -112,7 +140,7 @@ class Portfolio_Analyzer():
 
         plt.savefig(self.graphs_folder + 'periodic_simple_returns.png')
 
-    def generate_average_PSR(self, psr: pd.DataFrame) -> pd.DataFrame:
+    def average_PSR(self, psr: pd.DataFrame) -> pd.DataFrame:
         """
         As the name says.
         """
@@ -214,7 +242,7 @@ def proto() -> None:
 
     # Daily Simple Returns
     print('Daily Simple Returns:')
-    daily_simple_return = analyzer.generate_periodic_simple_returns(
+    daily_simple_return = analyzer.periodic_simple_returns(
             data_frame,
             1
     )
@@ -224,7 +252,7 @@ def proto() -> None:
 
     # Avrage Daily returns
     print('Average Daily returns(%) of stocks in your portfolio')
-    avg_daily = analyzer.generate_average_PSR(daily_simple_return)
+    avg_daily = analyzer.average_PSR(daily_simple_return)
     print(avg_daily*100)
 
     # Risk

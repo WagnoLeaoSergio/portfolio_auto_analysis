@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import pygad
 from datetime import date
 import matplotlib.pyplot as plt
@@ -6,14 +6,17 @@ from . import Portfolio_Analyzer
 
 last_fitness = 0
 
-def example():
-    """
-    Given the following function:
-        y = f(w1:w6) = w1x1 + w2x2 + w3x3 + w4x4 + w5x5 + 6wx6
-        where (x1,x2,x3,x4,x5,x6)=(4,-2,3.5,5,-11,-4.7) and y=44
-    What are the best values for the 6 weights (w1 to w6)? We are going to use the genetic algorithm to optimize this function.
-    """
+def sharpe_ratio(return_series, N, risk_free=0):
+    mean = return_series.mean() * N  -risk_free
+    sigma = return_series.std() * np.sqrt(N)
+    return mean / sigma
 
+def sortino_ratio(return_series, N, risk_free=0):
+    mean = return_series.mean() * N -risk_free
+    std_neg = return_series[return_series < 0].std() * np.sqrt(N)
+    return mean / std_neg
+
+def example():
     global last_fitness
     global fitness_func
     global on_generation
@@ -21,45 +24,72 @@ def example():
     # Defining parameters
     wallet = 1000
     stocksymbols = [
-        'TATAMOTORS',
-        'DABUR',
-        'ICICIBANK',
-        'WIPRO',
-        'BPCL',
-        'IRCTC',
-        'INFY',
-        'RELIANCE'
+        'AAPL',
+        'AMZN',
+        'MSFT',
+        'GOOGL',
+        'FB'
     ]
 
     analyzer = Portfolio_Analyzer()
-    start_date = date(2021, 1, 19)
-    end_date = date.today()
+
+    start_date = date(2013, 1, 1)
+    end_date = date(2020, 10, 1)
+
+    work_days = np.busday_count(start_date, end_date)
+
     data_frame = analyzer.get_price_data(
         stocksymbols,
         start_date,
         end_date
     )
 
+    # portf_table = analyzer.portfolio_table(
+        # data_frame,
+        # [ 1/len(stocksymbols) for _ in stocksymbols ],
+        # wallet
+    # )
+
     def fitness_func(solution, solution_idx):
-        if numpy.sum(solution) <= 0 or numpy.sum(solution) > 1:
+        if np.sum(solution) < 0 or np.sum(solution) > 1:
             return 0
-            
-        daily_simple_return = analyzer.generate_periodic_simple_returns(
-                data_frame,
-                1
-        )
-        avg_daily = analyzer.generate_average_PSR(daily_simple_return)
-        standard_deviation = analyzer.annualized_standard_deviation(
-            daily_simple_return,
-            252
-        )
-        sharpe_ratio = analyzer.sharpe_ratio(avg_daily, standard_deviation)
-        fitness = 0
+       
+        def allocation(row):
+            return sum([ value*solution[i] for i, value in enumerate(row) ])
 
-        for i, percentage in enumerate(solution):
-            fitness += percentage*sharpe_ratio[i]
+        # portf_table = analyzer.portfolio_table(
+            # data_frame,
+            # solution,
+            # wallet
+        # )
 
-        return fitness
+        daily_return = data_frame.pct_change(1).dropna()
+        daily_return['Portfolio'] = daily_return.apply(allocation, axis=1) 
+
+        sr = sortino_ratio(daily_return['Portfolio'], 255, 0.01)
+
+        # daily_return = portf_table['Total Pos'].pct_change(1)
+        # sharpe_ratio = (daily_return.mean() / daily_return.std()) * np.sqrt(255)
+
+        # daily_simple_return = analyzer.periodic_simple_returns(
+            # data_frame,
+            # 1
+        # )
+
+        # avg_daily = analyzer.average_PSR(daily_simple_return)
+
+        # standard_deviation = analyzer.annualized_standard_deviation(
+            # daily_simple_return,
+            # work_days
+        # )
+
+        # sharpe_ratio = analyzer.sharpe_ratio(avg_daily, standard_deviation)
+        # fitness = 0
+
+        # for i, percentage in enumerate(solution):
+            # fitness += percentage*avg_daily[i]
+
+        return sr
 
     def on_generation(ga_instance):
         global last_fitness
@@ -68,8 +98,8 @@ def example():
         print("Change     = {change}".format(change=ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1] - last_fitness))
         last_fitness = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
 
-    num_generations = 2000 # Number of generations.
-    num_parents_mating = 10 # Number of solutions to be selected as parents in the mating pool.
+    num_generations = 1000 # Number of generations.
+    num_parents_mating = 15 # Number of solutions to be selected as parents in the mating pool.
     sol_per_pop = 40 # Number of solutions in the population.
     num_genes = len(stocksymbols)
     init_low_range = 0.0
@@ -77,7 +107,7 @@ def example():
     random_mutation_min_val = 0.0
     random_mutation_max_val = 1.0
     initial_population = [ [ 1/len(stocksymbols) for _ in stocksymbols ] for _ in range(sol_per_pop) ]
-    gene_space = numpy.linspace(0, 1, 300)
+    gene_space = np.linspace(0, 1, 300)
 
     ga_instance = pygad.GA(
         gene_space=gene_space,
@@ -95,8 +125,7 @@ def example():
 
     # Running the GA to optimize the parameters of the function.
     ga_instance.run()
-    ga_instance.plot_fitness()
-    plt.savefig('graphs/optimization_fitness.png')
+    ga_instance.plot_fitness().savefig('graphs/optimization_fitness.png')
 
 
     # Returning the details of the best solution.
