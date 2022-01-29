@@ -98,7 +98,7 @@ def example():
         print("Change     = {change}".format(change=ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1] - last_fitness))
         last_fitness = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
 
-    num_generations = 1000 # Number of generations.
+    num_generations = 300 # Number of generations.
     num_parents_mating = 15 # Number of solutions to be selected as parents in the mating pool.
     sol_per_pop = 40 # Number of solutions in the population.
     num_genes = len(stocksymbols)

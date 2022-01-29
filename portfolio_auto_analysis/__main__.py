@@ -1,5 +1,6 @@
 import argparse  # pragma: no cover
 from . import proto  # pragma: no cover
+from . import example
 
 
 def main() -> None:  # pragma: no cover
@@ -50,7 +51,8 @@ def main() -> None:  # pragma: no cover
         print("Verbose mode is on.")
 
     print("Executing main function")
-    proto()
+    # proto()
+    example()
     print("End of main function")
 
 
