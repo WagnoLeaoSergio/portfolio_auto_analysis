@@ -1,7 +1,7 @@
-import investpy
 import numpy as np
 import pandas as pd
 import seaborn as sb
+import yfinance as yf
 from datetime import date
 import matplotlib.pyplot as plt
 
@@ -25,30 +25,13 @@ class Portfolio_Analyzer():
         """
         Fetchs the historical data of the listed symbols.
         """
-        print(f"You have {len(symbols)} assets in your portfolio.")
-
+        print(f"Fetching {len(symbols)} assets data.")
         # Fetching data
-        data_frame = pd.DataFrame()
-        for i, symbol in enumerate(symbols):
-            data = investpy.get_stock_historical_data(
-                country='United States',
-                stock=symbol,
-                from_date=start_date.strftime('%d/%m/%Y'),
-                to_date=end_date.strftime('%d/%m/%Y'),
-            )[['Close']]
-
-            data.rename(
-                columns={'Close': symbol},
-                inplace=True
-            )
-
-            # data.drop(['Symbol'], axis=1, inplace=True)
-
-            if i == 0:
-                data_frame = data
-            else:
-                data_frame = data_frame.join(data)
-        return data_frame
+        return yf.download(
+            ' '.join(symbols),
+            start=start_date.strftime('%Y-%m-%d'),
+            end=end_date.strftime('%Y-%m-%d')
+        )['Adj Close']
 
     def portfolio_table(
         self,
@@ -175,6 +158,26 @@ class Portfolio_Analyzer():
             std: pd.DataFrame
     ) -> pd.DataFrame:
         return (avg_psr / std) * 100
+
+    def f_sharpe_ratio(
+        self,
+        return_series: pd.DataFrame,
+        N: int,
+        risk_free: float
+    ):
+        mean = return_series.mean() * N  -risk_free
+        sigma = return_series.std() * np.sqrt(N)
+        return mean / sigma
+
+    def f_sortino_ratio(
+        self,
+        return_series: pd.DataFrame,
+        N: int,
+        risk_free: float
+    ):
+        mean = return_series.mean() * N -risk_free
+        std_neg = return_series[return_series < 0].std() * np.sqrt(N)
+        return mean / std_neg
 
     def cummulative_PSR(self, psr: pd.DataFrame) -> pd.DataFrame:
         """
