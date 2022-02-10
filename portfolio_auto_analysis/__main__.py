@@ -1,6 +1,7 @@
 import argparse  # pragma: no cover
+import numpy as np
 from . import proto  # pragma: no cover
-from . import example
+from . import Optmizer
 
 
 def main() -> None:  # pragma: no cover
@@ -51,8 +52,8 @@ def main() -> None:  # pragma: no cover
         print("Verbose mode is on.")
 
     print("Executing main function")
-    # proto()
-    example()
+    optimizer = Optmizer()
+    optimizer.run()
     print("End of main function")
 
 
