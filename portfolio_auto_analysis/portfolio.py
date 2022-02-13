@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sb
 import yfinance as yf
+import datetime as dt
 from datetime import date
 import matplotlib.pyplot as plt
 
@@ -59,6 +60,11 @@ class Portfolio_Analyzer():
         portf_table['Total Pos'] = portf_table.sum(axis=1)
         return portf_table
 
+    def plot_allocations(self, data_frame: pd.DataFrame, index: list) -> None:
+        fig, ax = plt.subplots(figsize=(15, 8))
+        ax.bar(index, data_frame)
+        ax.set_title("Portfolio Allocations (%)")
+        return fig
 
     def plot_history_graph(self, data_frame: pd.DataFrame) -> None:
         """
@@ -66,13 +72,16 @@ class Portfolio_Analyzer():
         """
         fig, ax = plt.subplots(figsize=(15, 8))
         for i in data_frame.columns.values:
-            ax.plot(data_frame[i], label=i)
+            ax.plot(data_frame.index.values, data_frame[i], label=i)
 
-        ax.set_title("Portfolio Close Price History")
+        ax.set_title("Portfolio Returns History")
+
         ax.set_xlabel('Date', fontsize=18)
-        ax.set_ylabel('Close Price INR (Rs)', fontsize=18)
+
+        ax.set_ylabel('Relative Returns', fontsize=18)
         ax.legend(data_frame.columns.values, loc='upper left')
         plt.savefig(self.graphs_folder + 'symbols_prices_history.png')
+        return fig
 
     def plot_correlation_matrix(self, data_frame: pd.DataFrame) -> None:
         """
@@ -83,15 +92,17 @@ class Portfolio_Analyzer():
         print(correlation_matrix)
 
         plt.figure(figsize=(12, 7))
+        fig, ax = plt.subplots(figsize=(15, 8))
         sb.heatmap(
             correlation_matrix,
             xticklabels=correlation_matrix.columns,
             yticklabels=correlation_matrix.columns,
             cmap='YlGnBu',
             annot=True,
-            linewidth=0.5
+            linewidth=1.0
         )
         plt.savefig(self.graphs_folder + 'correlation_matrix.png')
+        return fig
 
     def periodic_simple_returns(
             self,
@@ -114,14 +125,16 @@ class Portfolio_Analyzer():
         fig, ax = plt.subplots(figsize=(15, 8))
 
         for i in psr.columns.values:
-            ax.plot(psr[i], lw=2, label=i)
+            ax.plot(psr.index.values, psr[i], lw=2, label=i)
 
         ax.legend(loc='upper right', fontsize=10)
         ax.set_title('Volatility in periodic simple returns')
+
         ax.set_xlabel('Date')
         ax.set_ylabel('Periodic simple returns')
 
         plt.savefig(self.graphs_folder + 'periodic_simple_returns.png')
+        return fig
 
     def average_PSR(self, psr: pd.DataFrame) -> pd.DataFrame:
         """
@@ -134,12 +147,13 @@ class Portfolio_Analyzer():
         Creates a BoxPlot visualization of the PSR.
         """
         print('Periodic Returns Risk')
-        psr.plot(
-            kind='box',
-            figsize=(20, 10),
-            title="Risk Box Plot"
+        fig, ax = plt.subplots(figsize=(15, 8))
+        plt.boxplot(
+            psr,
+            labels=psr.columns.values
         )
         plt.savefig(self.graphs_folder + 'risk_box_plot.png')
+        return fig
 
     def annualized_standard_deviation(
             self,
@@ -205,6 +219,7 @@ class Portfolio_Analyzer():
         ax.set_xlabel('Date')
         ax.set_ylabel('Growth of Rs 1 investment')
         plt.savefig(self.graphs_folder + 'cummulative_returns.png')
+        return fig
 
 
 def proto() -> None:
