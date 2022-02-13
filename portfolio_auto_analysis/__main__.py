@@ -1,7 +1,10 @@
+import os
 import argparse  # pragma: no cover
 import numpy as np
+import streamlit
 from . import proto  # pragma: no cover
 from . import Optmizer
+from . import Dashboard
 
 
 def main() -> None:  # pragma: no cover
@@ -52,7 +55,16 @@ def main() -> None:  # pragma: no cover
         print("Verbose mode is on.")
 
     print("Executing main function")
-    optimizer = Optmizer()
+    stocksymbols = [
+        'AAPL',
+        'AMZN',
+        'MSFT',
+        'EOG',
+        'OXY',
+        'HAL',
+        'SLB'
+    ]
+    optimizer = Optmizer(stocksymbols)
     optimizer.run()
     print("End of main function")
 
