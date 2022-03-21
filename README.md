@@ -5,6 +5,10 @@
 
 An Web App to make genetic agolrithms experiments with portfolio optimization. 
 
+![interface_image](./interface_1.png)
+
+![interface_image2](./interface_2.png)
+
 ## Instal from source code
 
 ```bash
